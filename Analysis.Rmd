@@ -1,0 +1,91 @@
+---
+title: "Analysis"
+output: html_document
+date: "2023-02-15"
+---
+
+Part I: 
+
+Import the Sequences.csv file.
+
+```{r}
+data<-read.csv("Sequences.csv")
+str(data)
+head(data)
+```
+
+Count the number of each base pair (A, T, C and G), in each of the three sequences. (Hint: do not include any characters from the header, use the nucleotide sequence only; you MIGHT use gsub(), nchar(), for loops, if/then statements). Print out each sequence. Print out the number of each nucleotide as a table for each of the three sequences.
+
+```{r}
+  A_count <- nchar(gsub("[^A]", "", data))
+  T_count <- nchar(gsub("[^T]", "", data))
+  C_count <- nchar(gsub("[^C]", "", data))
+  G_count <- nchar(gsub("[^G]", "", data))
+  
+cat("Sequence:", seq, "\n")
+  cat("A count:", A_count, "\n")
+  cat("T count:", T_count, "\n")
+  cat("C count:", C_count, "\n")
+  cat("G count:", G_count, "\n\n")
+```
+
+Include an image of a bacteria from the internet, and a link to the Wikipedia page about Borrelia burgdorferi
+
+
+
+Calculate GC Content (% of nucleotides that are G or C) and create a final table showing GC content for each sequence ID
+
+```{r}
+calculate_gc <- function(data) {
+  gc_count <- sum(strsplit(data, "")[[1]] %in% c("G", "C"))
+  gc_content <- gc_count / nchar(data) * 100
+  return(gc_content)
+}
+
+# Apply the function to each sequence in the data frame and create a new column for GC content
+data$GC_content <- sapply(data$Sequence, calculate_gc)
+
+# Print the final table with sequence IDs and their corresponding GC content
+print(data)
+
+```
+
+Part II: 
+
+```{r}
+
+library(rentrez)
+library(ggplot2)
+
+# Search parameters
+search_terms <- "human [Organism] AND mitochondrion [filter]"
+db <- "nucleotide"
+retmax <- 1
+
+# Search GenBank
+search <- entrez_search(db, term = search_terms, retmax = retmax)
+id <- search$ids
+seq <- entrez_fetch(db, id = id, rettype = "fasta")
+
+# Print retrieved sequence
+cat("Query sequence:\n", seq, "\n")
+
+# Align sequences
+aln <- AlignSeqs(Seqs = seq, searchDB = "nt", n = 5, verbose = FALSE)
+
+# Plot similarity scores
+sim_scores <- ScoreSimilarity(aln)
+sim_scores_df <- as.data.frame(sim_scores)
+ggplot(sim_scores_df, aes(x = Sequence, y = Score)) +
+  geom_col(fill = "steelblue") +
+  theme_minimal() +
+  xlab("Sequence") +
+  ylab("Similarity Score") +
+  ggtitle("Sequence Similarity Scores")
+```
+
+
+
+
+
+
